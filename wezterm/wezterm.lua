@@ -42,13 +42,29 @@ config.colors = {
 }
 
 local tab_counts = {}
+local workspace_dir = wezterm.home_dir:gsub("\\", "/") .. "/workspace"
+
+local function project_name(pane)
+	local cwd = pane.current_working_dir
+	if not cwd or cwd.scheme ~= "file" then
+		return nil
+	end
+
+	local path = cwd.file_path:gsub("\\", "/")
+	if path == workspace_dir or path == workspace_dir .. "/" then
+		return "workspace"
+	end
+	if path:sub(1, #workspace_dir + 1) == workspace_dir .. "/" then
+		return path:sub(#workspace_dir + 2):match("^[^/]+")
+	end
+end
 
 local function tab_title(tab, pane)
 	local index = tab.tab_index + 1
 	local width = (tab_counts[tab.window_id] or 0) >= 6 and 14 or 21
 	local title = tab.tab_title
 	if not title or title == "" then
-		title = pane.title
+		title = project_name(pane) or pane.title
 	end
 	local label = wezterm.truncate_right(string.format("%d: %s", index, title), width - 2)
 	local left_padding = math.floor((width - wezterm.column_width(label)) / 2)
