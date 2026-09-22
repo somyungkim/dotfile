@@ -147,6 +147,7 @@ tabline.setup({
 })
 
 config.keys = {
+	{ key = "Enter", mods = "OPT", action = act.DisableDefaultAssignment },
 	{ key = "LeftArrow", mods = "CMD", action = act.SendString("\x01") },
 	{ key = "RightArrow", mods = "CMD", action = act.SendString("\x05") },
 	{ key = "Backspace", mods = "CMD", action = act.SendString("\x15") },
