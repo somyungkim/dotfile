@@ -138,9 +138,6 @@ tabline.setup({
 		tabline_c = {},
 		tab_active = { tab_title },
 		tab_inactive = {
-			{ Foreground = { Color = "#f6c177" } },
-			{ "output", padding = { left = 1, right = 0 } },
-			"ResetAttributes",
 			tab_title,
 		},
 		tabline_x = { { "ram", icons_enabled = true } },
