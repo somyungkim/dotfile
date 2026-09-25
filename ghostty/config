@@ -3,7 +3,7 @@
 # This template file has been automatically created at the following
 # path since Ghostty couldn't find any existing config files on your system:
 #
-#   /Users/somyung.kim/Library/Application Support/com.mitchellh.ghostty/config
+#   ~/.config/ghostty/config
 #
 # The template does not set any default options, since Ghostty ships
 # with sensible defaults for all options. Users should only need to set
@@ -49,7 +49,7 @@
 # resize-overlay-duration = 4s 200ms
 # ============================CUSTOM CONFIG STARTS HERE=============================
 # Base Settings
-working-directory = /Users/somyung.kim
+working-directory = home
 window-inherit-working-directory = false
 tab-inherit-working-directory = false
 
@@ -66,4 +66,4 @@ cursor-style = bar
 cursor-style-blink = true
 keybind = global:opt+cmd+t=toggle_quick_terminal
 macos-icon = custom
-macos-custom-icon = /Users/somyung.kim/.config/ghostty/Ghostty.png
+macos-custom-icon = ~/.config/ghostty/assets/Ghostty.png
