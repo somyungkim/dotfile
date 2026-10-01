@@ -3,10 +3,11 @@ local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabl
 
 local config = wezterm.config_builder()
 local act = wezterm.action
+local is_macos = wezterm.target_triple:find("darwin") ~= nil
 
 config.automatically_reload_config = true
 config.color_scheme = "rose-pine-moon"
-config.font = wezterm.font_with_fallback({ "JetBrains Mono", "Apple Color Emoji" })
+config.font = wezterm.font_with_fallback({ "JetBrains Mono", is_macos and "Apple Color Emoji" or "Noto Color Emoji" })
 config.font_size = 15.0
 config.line_height = 1.08
 config.harfbuzz_features = { "liga=0", "calt=0" }
@@ -15,7 +16,7 @@ config.macos_window_background_blur = 50
 config.default_cursor_style = "BlinkingBar"
 config.cursor_blink_ease_in = "Constant"
 config.cursor_blink_ease_out = "Constant"
-config.default_cwd = "/Users/somyung.kim"
+config.default_cwd = wezterm.home_dir
 config.enable_tab_bar = true
 config.hide_tab_bar_if_only_one_tab = false
 config.use_fancy_tab_bar = false
@@ -146,13 +147,16 @@ tabline.setup({
 	},
 })
 
-config.keys = {
-	{ key = "Enter", mods = "OPT", action = act.DisableDefaultAssignment },
-	{ key = "LeftArrow", mods = "CMD", action = act.SendString("\x01") },
-	{ key = "RightArrow", mods = "CMD", action = act.SendString("\x05") },
-	{ key = "Backspace", mods = "CMD", action = act.SendString("\x15") },
-	{ key = "LeftArrow", mods = "OPT", action = act.SendKey({ key = "b", mods = "ALT" }) },
-	{ key = "RightArrow", mods = "OPT", action = act.SendKey({ key = "f", mods = "ALT" }) },
-}
+-- Mac-style line and word navigation; on Linux, Toshy provides these.
+if is_macos then
+	config.keys = {
+		{ key = "Enter", mods = "OPT", action = act.DisableDefaultAssignment },
+		{ key = "LeftArrow", mods = "CMD", action = act.SendString("\x01") },
+		{ key = "RightArrow", mods = "CMD", action = act.SendString("\x05") },
+		{ key = "Backspace", mods = "CMD", action = act.SendString("\x15") },
+		{ key = "LeftArrow", mods = "OPT", action = act.SendKey({ key = "b", mods = "ALT" }) },
+		{ key = "RightArrow", mods = "OPT", action = act.SendKey({ key = "f", mods = "ALT" }) },
+	}
+end
 
 return config
