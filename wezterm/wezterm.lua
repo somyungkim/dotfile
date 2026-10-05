@@ -141,9 +141,9 @@ tabline.setup({
 		tab_inactive = {
 			tab_title,
 		},
-		tabline_x = { { "ram", icons_enabled = true } },
-		tabline_y = { { "cpu", icons_enabled = true } },
-		tabline_z = { { "hostname", icons_enabled = true, icon = wezterm.nerdfonts.md_laptop } },
+		tabline_x = {},
+		tabline_y = {},
+		tabline_z = {},
 	},
 })
 
