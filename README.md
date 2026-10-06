@@ -43,6 +43,7 @@ Ghostty and WezTerm are alternatives; install whichever you use. Install agent
 clients/plugins separately; Claude's rules expect the Context7 plugin and `mac-ocr`
 on macOS or `pdftotext` on Linux.
 WezTerm fetches [tabline.wez](https://github.com/michaelbrusegard/tabline.wez) on first use.
+For the Neovim setup, install Neovim, ripgrep, and Lazygit separately.
 
 Review the shell files before applying: they differ from the original Mac's live
 copies. Node/Python versions and global packages are installed separately.
@@ -59,7 +60,7 @@ dotfile_repo="$(pwd -P)"
 test -f "$dotfile_repo/agents/AGENTS.md"
 dotfile_paths=(
   .tmux.conf .wezterm.lua .zshrc .zprofile
-  .config/ghostty .config/starship.toml .config/agents/AGENTS.md
+  .config/ghostty .config/nvim .config/starship.toml .config/agents/AGENTS.md
   .claude/CLAUDE.md .codex/AGENTS.md
   .copilot/copilot-instructions.md .pi/agent/AGENTS.md
 )
@@ -79,6 +80,7 @@ ln -s "$dotfile_repo/wezterm/wezterm.lua" "$HOME/.wezterm.lua"
 ln -s "$dotfile_repo/zsh/.zshrc" "$HOME/.zshrc"
 ln -s "$dotfile_repo/zsh/.zprofile" "$HOME/.zprofile"
 ln -s "$dotfile_repo/ghostty" "$HOME/.config/ghostty"
+ln -s "$dotfile_repo/nvim" "$HOME/.config/nvim"
 ln -s "$dotfile_repo/starship/starship.toml" "$HOME/.config/starship.toml"
 ln -s "$dotfile_repo/agents/AGENTS.md" "$HOME/.config/agents/AGENTS.md"
 ln -s "$dotfile_repo/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
@@ -95,9 +97,11 @@ ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 | `tmux/tmux.conf` | `~/.tmux.conf` |
 | `wezterm/wezterm.lua` | `~/.wezterm.lua` |
 | `ghostty/` | `~/.config/ghostty/` |
+| `nvim/` | `~/.config/nvim/` |
 | `zsh/.zshrc` | `~/.zshrc` |
 | `zsh/.zprofile` | `~/.zprofile` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
+| `lazygit/config.yml` | `$(lazygit --print-config-dir)/config.yml` |
 | `agents/AGENTS.md` | `~/.config/agents/AGENTS.md` |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` |
 | `~/.config/agents/AGENTS.md` | `~/.codex/AGENTS.md` |
@@ -112,6 +116,31 @@ Ghostty loads both.
 
 ## Notes
 
+- **Neovim:** uses Rosé Pine Moon, lazy.nvim, Oil, and Snacks. Plugins install on
+  first launch; versions are recorded in `nvim/lazy-lock.json`. The leader is
+  **Space**: `e` opens Oil, `f` finds files, `s` searches text, `b` lists buffers,
+  and `g` opens Lazygit. Restart Neovim after changing its configuration.
+- **Lazygit:** uses the [Rosé Pine Moon theme](https://github.com/rose-pine/lazygit).
+  With Lazygit installed, run this from the repository root to back up an existing
+  config and link the theme on either macOS or Linux:
+
+  ```sh
+  (
+  set -e
+  lazygit_config_dir="$(lazygit --print-config-dir)"
+  mkdir -p "$lazygit_config_dir"
+  if [ -e "$lazygit_config_dir/config.yml" ] || [ -L "$lazygit_config_dir/config.yml" ]; then
+    lazygit_backup="$(mktemp -d "$lazygit_config_dir/backup-XXXXXXXX")"
+    mv "$lazygit_config_dir/config.yml" "$lazygit_backup/config.yml"
+    printf 'Backup: %s\n' "$lazygit_backup/config.yml"
+  fi
+  ln -s "$(pwd -P)/lazygit/config.yml" "$lazygit_config_dir/config.yml"
+  )
+  ```
+
+  Reopen Lazygit to apply. The included Snacks.nvim setup uses `configure = false`
+  to read this config instead of generating one. This also disables Snacks'
+  automatic editor preset and icon configuration.
 - **tmux plugins:** if TPM is absent, run
   `git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"`.
   Start tmux, then press **Ctrl+b**, followed by **Shift+i**, to install plugins.
