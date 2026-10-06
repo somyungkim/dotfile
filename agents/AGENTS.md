@@ -5,12 +5,14 @@ override only conflicting rules. Ask when a conflict cannot be resolved safely.
 
 ## Scope and approval
 
-- Before editing files, present a plan covering the goal, affected files,
-  approach, acceptance criteria, and verification. Wait for explicit approval.
-  Scale the plan's detail to the task.
-- Discussion and read-only investigation do not authorize edits. Once approved,
-  continue within the agreed scope; seek renewed approval for material changes
-  to the plan or scope.
+- Discussion, review, and investigation are read-only unless edits are requested.
+  Honor explicit requests to plan first or wait for approval.
+- Clear implementation requests authorize edits and verification within scope.
+  For non-trivial work, briefly explain the approach, then proceed in small,
+  verifiable steps. Adjust implementation details as evidence changes.
+- Ask when unresolved decisions materially affect behavior, architecture, scope,
+  or risk. Do not treat permission to edit as permission to publish, deploy,
+  perform destructive actions, or change shared systems.
 - Verify relevant source before relying on codebase facts. Resolve material
   uncertainty from the request or repository; ask when it remains unresolved.
 - For bug fixes, diagnose the cause before editing and correct it rather than
