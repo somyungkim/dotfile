@@ -40,8 +40,8 @@ cd "$HOME/workspace/dotfile"
 ```
 
 Ghostty and WezTerm are alternatives; install whichever you use. Install agent
-clients/plugins separately; Claude's rules expect the Context7 plugin and `mac-ocr`
-on macOS or `pdftotext` on Linux.
+clients/plugins separately; Claude's PDF rules expect `mac-ocr` on macOS or
+`pdftotext` on Linux.
 WezTerm fetches [tabline.wez](https://github.com/michaelbrusegard/tabline.wez) on first use.
 For the Neovim setup, install Neovim, ripgrep, and Lazygit separately.
 
