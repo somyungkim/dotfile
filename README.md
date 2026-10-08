@@ -48,6 +48,10 @@ For the Neovim setup, install Neovim, ripgrep, and Lazygit separately.
 Review the shell files before applying: they differ from the original Mac's live
 copies. Node/Python versions and global packages are installed separately.
 
+If migrating Pi from `pi-mcp-adapter`, run `pi remove npm:pi-mcp-adapter`
+**before linking** the configuration below. The checked-in Pi settings use built-in
+MCP support instead; see the Pi notes below for package setup and sign-in.
+
 Run the following block from the repository root in **zsh**. It backs up existing
 destinations, including directories and symlinks, then creates the links. Save the
 printed backup path. For partial setup, omit the corresponding backup entries and
@@ -63,6 +67,7 @@ dotfile_paths=(
   .config/ghostty .config/nvim .config/starship.toml .config/agents/AGENTS.md
   .claude/CLAUDE.md .codex/AGENTS.md
   .copilot/copilot-instructions.md .pi/agent/AGENTS.md
+  .pi/agent/settings.json .pi/agent/mcp.json
 )
 mkdir -p "$HOME/.dotfile-backups"
 dotfile_backup="$(mktemp -d "$HOME/.dotfile-backups/install-XXXXXXXX")"
@@ -87,6 +92,8 @@ ln -s "$dotfile_repo/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.codex/AGENTS.md"
 ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.copilot/copilot-instructions.md"
 ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
+ln -s "$dotfile_repo/pi/settings.json" "$HOME/.pi/agent/settings.json"
+ln -s "$dotfile_repo/pi/mcp.json" "$HOME/.pi/agent/mcp.json"
 )
 ```
 
@@ -107,6 +114,8 @@ ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 | `~/.config/agents/AGENTS.md` | `~/.codex/AGENTS.md` |
 | `~/.config/agents/AGENTS.md` | `~/.copilot/copilot-instructions.md` |
 | `~/.config/agents/AGENTS.md` | `~/.pi/agent/AGENTS.md` |
+| `pi/settings.json` | `~/.pi/agent/settings.json` |
+| `pi/mcp.json` | `~/.pi/agent/mcp.json` |
 
 Claude imports the shared file and appends Claude-specific rules.
 
@@ -116,6 +125,21 @@ Ghostty loads both.
 
 ## Notes
 
+- **Pi:** `pi/settings.json` preserves the dark theme, GitHub Copilot model default,
+  medium reasoning, and `pi-web-access`. Built-in MCP is enabled by default: do not
+  install `pi-mcp-adapter` or add `-builtin:mcp` to `extensions`.
+  After linking, run `pi install npm:pi-web-access` to install the declared package.
+  `pi/mcp.json` contains only the public Atlassian and Datadog endpoints; built-in
+  MCP connects both at session startup and uses its default `codemode` exposure.
+  Run `pi mcp list` to check connections. If sign-in is required, run
+  `pi mcp login atlassian` and `pi mcp login datadog`; adapter sign-ins stored in
+  the OS keychain are not automatically migrated to built-in MCP.
+  Restart Pi after migration so the adapter is no longer loaded.
+  Keep credentials (`auth.json`, `mcp-auth.json`), sessions, and caches local,
+  outside this repository. Use environment-variable references for any future
+  secrets in `mcp.json`. Pi settings and MCP edits through the CLI/UI can update
+  these symlinked repository files; review the diff before committing.
+  Local footer, recap, and fork-chat extensions are not managed here.
 - **Neovim:** uses Rosé Pine Moon, lazy.nvim, Oil, and Snacks. Plugins install on
   first launch; versions are recorded in `nvim/lazy-lock.json`. The leader is
   **Space**: `e` opens Oil, `f` finds files, `s` searches text, `b` lists buffers,
