@@ -18,7 +18,7 @@ const jiti = createJiti(import.meta.url, {
     "@earendil-works/pi-tui": requirePi.resolve("@earendil-works/pi-tui"),
   },
 });
-const { QueueEditor, default: extension } = await jiti.import("../extensions/queue-editor.ts");
+const { QueueEditor, default: extension } = await jiti.import("../extensions/queue-editor/index.ts");
 const { KeybindingsManager } = await import(pathToFileURL(join(piRoot, "dist/core/keybindings.js")));
 const { InteractiveMode } = await import(pathToFileURL(join(piRoot, "dist/modes/interactive/interactive-mode.js")));
 const { setKeybindings } = await import(pathToFileURL(requirePi.resolve("@earendil-works/pi-tui")));
@@ -187,9 +187,15 @@ for (const idle of [false, true]) {
 
 test("extension installs only in TUI mode and restores the editor on shutdown", () => {
   const handlers = new Map();
-  extension({ on: (event, handler) => handlers.set(event, handler) });
+  extension({
+    on: (event, handler) => handlers.set(event, handler),
+    registerMarkdownTransformer() {}, registerCommand() {}, appendEntry() {},
+  });
   const factories = [];
-  const ctx = { mode: "rpc", isIdle: () => true, ui: { setEditorComponent: (factory) => factories.push(factory) } };
+  const ctx = {
+    mode: "rpc", isIdle: () => true, sessionManager: { getBranch: () => [] },
+    ui: { setEditorComponent: (factory) => factories.push(factory) },
+  };
   handlers.get("session_start")({}, ctx);
   handlers.get("session_shutdown")({}, ctx);
   assert.equal(factories.length, 0);

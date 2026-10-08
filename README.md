@@ -68,7 +68,7 @@ dotfile_paths=(
   .claude/CLAUDE.md .codex/AGENTS.md
   .copilot/copilot-instructions.md .pi/agent/AGENTS.md
   .pi/agent/settings.json .pi/agent/mcp.json .pi/agent/keybindings.json
-  .pi/agent/extensions/queue-editor.ts
+  .pi/agent/extensions/queue-editor.ts .pi/agent/extensions/queue-editor
 )
 mkdir -p "$HOME/.dotfile-backups"
 dotfile_backup="$(mktemp -d "$HOME/.dotfile-backups/install-XXXXXXXX")"
@@ -96,7 +96,7 @@ ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 ln -s "$dotfile_repo/pi/settings.json" "$HOME/.pi/agent/settings.json"
 ln -s "$dotfile_repo/pi/mcp.json" "$HOME/.pi/agent/mcp.json"
 ln -s "$dotfile_repo/pi/keybindings.json" "$HOME/.pi/agent/keybindings.json"
-ln -s "$dotfile_repo/pi/extensions/queue-editor.ts" "$HOME/.pi/agent/extensions/queue-editor.ts"
+ln -s "$dotfile_repo/pi/extensions/queue-editor" "$HOME/.pi/agent/extensions/queue-editor"
 )
 ```
 
@@ -120,7 +120,7 @@ ln -s "$dotfile_repo/pi/extensions/queue-editor.ts" "$HOME/.pi/agent/extensions/
 | `pi/settings.json` | `~/.pi/agent/settings.json` |
 | `pi/mcp.json` | `~/.pi/agent/mcp.json` |
 | `pi/keybindings.json` | `~/.pi/agent/keybindings.json` |
-| `pi/extensions/queue-editor.ts` | `~/.pi/agent/extensions/queue-editor.ts` |
+| `pi/extensions/queue-editor/` | `~/.pi/agent/extensions/queue-editor/` |
 
 Claude imports the shared file and appends Claude-specific rules.
 
@@ -148,7 +148,7 @@ Ghostty loads both.
 - **Pi keyboard:** Option/Alt+Enter inserts a newline; Shift+Enter and Ctrl+J remain
   available. Enter submits while idle and steers while working, without cancelling
   running tools. Tab queues a follow-up while working with a nonempty draft.
-  The `queue-editor.ts` extension keeps Tab completion when idle, when a completion
+  The `queue-editor` extension keeps Tab completion when idle, when a completion
   menu is open, or in a slash-command/explicit path context. While working, use
   `@file` or `./file` to complete a bare filename; add a space after a completed path
   to queue the draft with Tab. Option/Alt+Up still restores queued messages.
@@ -156,8 +156,30 @@ Ghostty loads both.
   extension: without the extension, the Tab binding would override completion.
   Run `/reload` in Pi after changes. This extension owns the main editor factory;
   do not combine it with another custom-editor extension.
+  When upgrading from the earlier single-file extension, remove its old
+  `~/.pi/agent/extensions/queue-editor.ts` link after backing it up; the setup block
+  above backs up both old and new locations. Do not load both versions.
   Tests (requires npm-installed Pi and Node 22.19+):
-  `node --test pi/tests/queue-editor.test.mjs` from this repository's root.
+  `node --test pi/tests/*.test.mjs` from this repository's root.
+- **Pi compact pastes:** copied images display as `[Image #N]`, and copied files
+  as `[File #N: filename]`, in both the editor and delivered user messages. These
+  are labels for the original paths, not new inline-image uploads. Only pastes
+  consisting entirely of existing explicit file paths are treated as attachments;
+  ordinary prose, missing paths, directories, and shell arguments stay literal.
+  Both terminal paste and Ctrl+V text paste collapse above 10 lines or 1,000
+  characters, using Pi's native paste storage. The full text still reaches Pi,
+  including through Enter steering and Tab queueing; this does not save tokens.
+  The transcript folds only recorded pasted spans, preserving surrounding text.
+  Model context and normal session messages/exports retain full content. Small
+  display-only metadata entries let folding survive session resume; they contain
+  hashes, offsets, and labels, not another copy of the pasted content.
+  Existing messages without that metadata and the native pending-queue preview
+  are not rewritten. Use `/paste-view` to inspect a folded message (dialog edits
+  are discarded), or Ctrl+G to open the full current draft in your external editor.
+  A narrow compatibility adapter uses Pi 1.1's editor paste-storage internals for
+  atomic attachment labels and undo. If those internals are unavailable, it warns
+  and leaves paths visible rather than losing content. Re-run the tests after Pi
+  upgrades. The extension uses existing theme colors without adding new ones.
 - **Neovim:** uses Rosé Pine Moon, lazy.nvim, Oil, and Snacks. Plugins install on
   first launch; versions are recorded in `nvim/lazy-lock.json`. The leader is
   **Space**: `e` opens Oil, `f` finds files, `s` searches text, `b` lists buffers,

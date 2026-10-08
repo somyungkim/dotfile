@@ -1,6 +1,5 @@
 import {
   CustomEditor,
-  type ExtensionAPI,
   type KeybindingsManager,
 } from "@earendil-works/pi-coding-agent";
 import { Editor, matchesKey, type EditorTheme, type TUI } from "@earendil-works/pi-tui";
@@ -16,7 +15,7 @@ export class QueueEditor extends CustomEditor {
     super(tui, theme, bindings);
   }
 
-  private isCompletionContext(): boolean {
+  protected isCompletionContext(): boolean {
     if (this.isShowingAutocomplete()) return true;
 
     // Protect commands and explicit paths even before asynchronous suggestions appear.
@@ -44,17 +43,4 @@ export class QueueEditor extends CustomEditor {
     // paste expansion and queue UI. Enter and every other key remain unchanged.
     super.handleInput(data);
   }
-}
-
-export default function (pi: ExtensionAPI) {
-  pi.on("session_start", (_event, ctx) => {
-    if (ctx.mode !== "tui") return;
-    ctx.ui.setEditorComponent((tui, theme, bindings) =>
-      new QueueEditor(tui, theme, bindings, () => ctx.isIdle()),
-    );
-  });
-
-  pi.on("session_shutdown", (_event, ctx) => {
-    if (ctx.mode === "tui") ctx.ui.setEditorComponent(undefined);
-  });
 }
