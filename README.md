@@ -67,7 +67,8 @@ dotfile_paths=(
   .config/ghostty .config/nvim .config/starship.toml .config/agents/AGENTS.md
   .claude/CLAUDE.md .codex/AGENTS.md
   .copilot/copilot-instructions.md .pi/agent/AGENTS.md
-  .pi/agent/settings.json .pi/agent/mcp.json
+  .pi/agent/settings.json .pi/agent/mcp.json .pi/agent/keybindings.json
+  .pi/agent/extensions/queue-editor.ts
 )
 mkdir -p "$HOME/.dotfile-backups"
 dotfile_backup="$(mktemp -d "$HOME/.dotfile-backups/install-XXXXXXXX")"
@@ -79,7 +80,7 @@ for dotfile_rel in "${dotfile_paths[@]}"; do
   fi
 done
 mkdir -p "$HOME/.config/agents" "$HOME/.claude" "$HOME/.codex" \
-  "$HOME/.copilot" "$HOME/.pi/agent"
+  "$HOME/.copilot" "$HOME/.pi/agent/extensions"
 ln -s "$dotfile_repo/tmux/tmux.conf" "$HOME/.tmux.conf"
 ln -s "$dotfile_repo/wezterm/wezterm.lua" "$HOME/.wezterm.lua"
 ln -s "$dotfile_repo/zsh/.zshrc" "$HOME/.zshrc"
@@ -94,6 +95,8 @@ ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.copilot/copilot-instructions.md"
 ln -s "$HOME/.config/agents/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 ln -s "$dotfile_repo/pi/settings.json" "$HOME/.pi/agent/settings.json"
 ln -s "$dotfile_repo/pi/mcp.json" "$HOME/.pi/agent/mcp.json"
+ln -s "$dotfile_repo/pi/keybindings.json" "$HOME/.pi/agent/keybindings.json"
+ln -s "$dotfile_repo/pi/extensions/queue-editor.ts" "$HOME/.pi/agent/extensions/queue-editor.ts"
 )
 ```
 
@@ -116,6 +119,8 @@ ln -s "$dotfile_repo/pi/mcp.json" "$HOME/.pi/agent/mcp.json"
 | `~/.config/agents/AGENTS.md` | `~/.pi/agent/AGENTS.md` |
 | `pi/settings.json` | `~/.pi/agent/settings.json` |
 | `pi/mcp.json` | `~/.pi/agent/mcp.json` |
+| `pi/keybindings.json` | `~/.pi/agent/keybindings.json` |
+| `pi/extensions/queue-editor.ts` | `~/.pi/agent/extensions/queue-editor.ts` |
 
 Claude imports the shared file and appends Claude-specific rules.
 
@@ -140,6 +145,19 @@ Ghostty loads both.
   secrets in `mcp.json`. Pi settings and MCP edits through the CLI/UI can update
   these symlinked repository files; review the diff before committing.
   Local footer, recap, and fork-chat extensions are not managed here.
+- **Pi keyboard:** Option/Alt+Enter inserts a newline; Shift+Enter and Ctrl+J remain
+  available. Enter submits while idle and steers while working, without cancelling
+  running tools. Tab queues a follow-up while working with a nonempty draft.
+  The `queue-editor.ts` extension keeps Tab completion when idle, when a completion
+  menu is open, or in a slash-command/explicit path context. While working, use
+  `@file` or `./file` to complete a bare filename; add a space after a completed path
+  to queue the draft with Tab. Option/Alt+Up still restores queued messages.
+  An empty Enter does not send queued messages. Link both the keybindings and the
+  extension: without the extension, the Tab binding would override completion.
+  Run `/reload` in Pi after changes. This extension owns the main editor factory;
+  do not combine it with another custom-editor extension.
+  Tests (requires npm-installed Pi and Node 22.19+):
+  `node --test pi/tests/queue-editor.test.mjs` from this repository's root.
 - **Neovim:** uses Rosé Pine Moon, lazy.nvim, Oil, and Snacks. Plugins install on
   first launch; versions are recorded in `nvim/lazy-lock.json`. The leader is
   **Space**: `e` opens Oil, `f` finds files, `s` searches text, `b` lists buffers,
@@ -165,6 +183,11 @@ Ghostty loads both.
   Reopen Lazygit to apply. The included Snacks.nvim setup uses `configure = false`
   to read this config instead of generating one. This also disables Snacks'
   automatic editor preset and icon configuration.
+- **tmux keyboard:** the config requires tmux 3.5+ and enables extended keys with
+  CSI-u encoding. To apply just the keyboard settings without stopping sessions,
+  run `tmux set -s extended-keys on` and `tmux set -s extended-keys-format csi-u`,
+  then restart the affected agent. If modified keys still collapse into Enter,
+  save your work and restart tmux when convenient; do not kill active sessions.
 - **tmux plugins:** if TPM is absent, run
   `git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"`.
   Start tmux, then press **Ctrl+b**, followed by **Shift+i**, to install plugins.
