@@ -69,6 +69,7 @@ dotfile_paths=(
   .copilot/copilot-instructions.md .pi/agent/AGENTS.md
   .pi/agent/settings.json .pi/agent/mcp.json .pi/agent/keybindings.json
   .pi/agent/extensions/queue-editor.ts .pi/agent/extensions/queue-editor
+  .pi/agent/extensions/compact-tools.ts .pi/agent/themes/dark-flat.json
 )
 mkdir -p "$HOME/.dotfile-backups"
 dotfile_backup="$(mktemp -d "$HOME/.dotfile-backups/install-XXXXXXXX")"
@@ -80,7 +81,7 @@ for dotfile_rel in "${dotfile_paths[@]}"; do
   fi
 done
 mkdir -p "$HOME/.config/agents" "$HOME/.claude" "$HOME/.codex" \
-  "$HOME/.copilot" "$HOME/.pi/agent/extensions"
+  "$HOME/.copilot" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/themes"
 ln -s "$dotfile_repo/tmux/tmux.conf" "$HOME/.tmux.conf"
 ln -s "$dotfile_repo/wezterm/wezterm.lua" "$HOME/.wezterm.lua"
 ln -s "$dotfile_repo/zsh/.zshrc" "$HOME/.zshrc"
@@ -97,6 +98,8 @@ ln -s "$dotfile_repo/pi/settings.json" "$HOME/.pi/agent/settings.json"
 ln -s "$dotfile_repo/pi/mcp.json" "$HOME/.pi/agent/mcp.json"
 ln -s "$dotfile_repo/pi/keybindings.json" "$HOME/.pi/agent/keybindings.json"
 ln -s "$dotfile_repo/pi/extensions/queue-editor" "$HOME/.pi/agent/extensions/queue-editor"
+ln -s "$dotfile_repo/pi/extensions/compact-tools.ts" "$HOME/.pi/agent/extensions/compact-tools.ts"
+ln -s "$dotfile_repo/pi/themes/dark-flat.json" "$HOME/.pi/agent/themes/dark-flat.json"
 )
 ```
 
@@ -121,6 +124,8 @@ ln -s "$dotfile_repo/pi/extensions/queue-editor" "$HOME/.pi/agent/extensions/que
 | `pi/mcp.json` | `~/.pi/agent/mcp.json` |
 | `pi/keybindings.json` | `~/.pi/agent/keybindings.json` |
 | `pi/extensions/queue-editor/` | `~/.pi/agent/extensions/queue-editor/` |
+| `pi/extensions/compact-tools.ts` | `~/.pi/agent/extensions/compact-tools.ts` |
+| `pi/themes/dark-flat.json` | `~/.pi/agent/themes/dark-flat.json` |
 
 Claude imports the shared file and appends Claude-specific rules.
 
@@ -130,21 +135,60 @@ Ghostty loads both.
 
 ## Notes
 
-- **Pi:** `pi/settings.json` preserves the dark theme, GitHub Copilot model default,
-  medium reasoning, and `pi-web-access`. Built-in MCP is enabled by default: do not
-  install `pi-mcp-adapter` or add `-builtin:mcp` to `extensions`.
-  After linking, run `pi install npm:pi-web-access` to install the declared package.
-  `pi/mcp.json` contains only the public Atlassian and Datadog endpoints; built-in
-  MCP connects both at session startup and uses its default `codemode` exposure.
-  Run `pi mcp list` to check connections. If sign-in is required, run
-  `pi mcp login atlassian` and `pi mcp login datadog`; adapter sign-ins stored in
-  the OS keychain are not automatically migrated to built-in MCP.
-  Restart Pi after migration so the adapter is no longer loaded.
+- **Pi:** `pi/settings.json` selects the `dark-flat` theme, GPT-6 Astra through GitHub
+  Copilot, and medium reasoning. After linking, install the declared packages:
+
+  ```sh
+  pi install npm:pi-web-access
+  pi install npm:@datadog/pi-plugin@0.7.21
+  pi install npm:@juicesharp/rpiv-ask-user-question@2.12.0
+  ```
+
+  The Datadog and questionnaire versions are pinned; change the package specs
+  deliberately when upgrading. Restart Pi after installation.
+  Built-in MCP remains enabled for Atlassian only, via `pi/mcp.json`, with its
+  default `codemode` exposure. Run `pi mcp list` to check it and
+  `pi mcp login atlassian` if sign-in is required. Do not install `pi-mcp-adapter`
+  or add `-builtin:mcp` to `extensions`.
   Keep credentials (`auth.json`, `mcp-auth.json`), sessions, and caches local,
   outside this repository. Use environment-variable references for any future
   secrets in `mcp.json`. Pi settings and MCP edits through the CLI/UI can update
   these symlinked repository files; review the diff before committing.
   Local footer, recap, and fork-chat extensions are not managed here.
+- **Datadog:** `@datadog/pi-plugin` owns the Datadog connection instead of built-in
+  MCP. Open `/datadog`, choose the Datadog site, and sign in. Its separate OAuth
+  grant is stored under `~/.pi/agent/datadog/`, not in this repository; existing
+  built-in MCP credentials are not reused. Removing the old MCP entry leaves its
+  unused credentials local, without revoking the remote grant.
+  The first connection becomes the default for new sessions; `/datadog toolsets`
+  manages capabilities. The plugin defaults to `core,visualizations` and exposes
+  `datadog`, `ddconfig`, and `ddtoolsets`. Datadog account permissions still govern
+  access; the plugin is not a read-only permission boundary.
+  For the optional macOS visualization preview, start `DDVIZ_ENABLED=1 pi`.
+  `/datadog ddviz` checks prerequisites; Shift+Right Arrow opens the panel after a
+  chart-producing call. This feature requires macOS 13+ and Xcode Command Line
+  Tools and is not enabled globally by these dotfiles.
+- **Structured questions:** `@juicesharp/rpiv-ask-user-question` adds the
+  `ask_user_question` tool, with up to four questions, choices, and free-text
+  answers. It does not replace the main editor or require another model/API key.
+  Dialog text input follows Pi's newline binding, including Option+Enter; Tab
+  navigates questionnaire tabs rather than queueing a chat message. The tool is
+  hidden in non-interactive runs. Optional overrides remain local at
+  `~/.config/rpiv-ask-user-question/config.json`; none are needed for this setup.
+- **Pi tool presentation:** `dark-flat` copies Pi 1.1's dark theme, changing only
+  the three tool background colors to the terminal default. User-message and
+  selection backgrounds stay unchanged. `compact-tools.ts` adds a presentation-only
+  wrapper for built-in tools and codemode: one collapsed call row and up to three
+  result-preview rows, with expansion hints and explicit status/error indicators.
+  Click a completed tool or press Ctrl+O for the native expanded output, commands,
+  and diffs. Normal tool truncation limits still apply; truncation is indicated.
+  Pi still owns one separator line between tool calls. Plugin-specific renderers,
+  including Datadog charts and questionnaires, keep their layouts; plugins using
+  the standard tool background colors also become background-free. No tool
+  implementations, permissions, or model-facing results are changed.
+  Run `/reload` after setup. Foregrounds pass AA against the configured Rose Pine
+  Moon background, including color-vision simulations, but Ghostty's 0.6 opacity
+  makes actual contrast depend on the desktop/window behind it.
 - **Pi keyboard:** Option/Alt+Enter inserts a newline; Shift+Enter and Ctrl+J remain
   available. Enter submits while idle and steers while working, without cancelling
   running tools. Tab queues a follow-up while working with a nonempty draft.
