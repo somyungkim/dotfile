@@ -70,6 +70,8 @@ dotfile_paths=(
   .pi/agent/settings.json .pi/agent/mcp.json .pi/agent/keybindings.json
   .pi/agent/extensions/queue-editor.ts .pi/agent/extensions/queue-editor
   .pi/agent/extensions/compact-tools.ts .pi/agent/themes/dark-flat.json
+  .pi/agent/extensions/background-processes.ts .config/rpiv-todo/config.json
+  .pi/agent/extensions/subagent/config.json
 )
 mkdir -p "$HOME/.dotfile-backups"
 dotfile_backup="$(mktemp -d "$HOME/.dotfile-backups/install-XXXXXXXX")"
@@ -81,7 +83,8 @@ for dotfile_rel in "${dotfile_paths[@]}"; do
   fi
 done
 mkdir -p "$HOME/.config/agents" "$HOME/.claude" "$HOME/.codex" \
-  "$HOME/.copilot" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/themes"
+  "$HOME/.copilot" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/themes" \
+  "$HOME/.config/rpiv-todo" "$HOME/.pi/agent/extensions/subagent"
 ln -s "$dotfile_repo/tmux/tmux.conf" "$HOME/.tmux.conf"
 ln -s "$dotfile_repo/wezterm/wezterm.lua" "$HOME/.wezterm.lua"
 ln -s "$dotfile_repo/zsh/.zshrc" "$HOME/.zshrc"
@@ -100,6 +103,9 @@ ln -s "$dotfile_repo/pi/keybindings.json" "$HOME/.pi/agent/keybindings.json"
 ln -s "$dotfile_repo/pi/extensions/queue-editor" "$HOME/.pi/agent/extensions/queue-editor"
 ln -s "$dotfile_repo/pi/extensions/compact-tools.ts" "$HOME/.pi/agent/extensions/compact-tools.ts"
 ln -s "$dotfile_repo/pi/themes/dark-flat.json" "$HOME/.pi/agent/themes/dark-flat.json"
+ln -s "$dotfile_repo/pi/extensions/background-processes.ts" "$HOME/.pi/agent/extensions/background-processes.ts"
+ln -s "$dotfile_repo/pi/rpiv-todo.json" "$HOME/.config/rpiv-todo/config.json"
+ln -s "$dotfile_repo/pi/subagents.json" "$HOME/.pi/agent/extensions/subagent/config.json"
 )
 ```
 
@@ -126,6 +132,9 @@ ln -s "$dotfile_repo/pi/themes/dark-flat.json" "$HOME/.pi/agent/themes/dark-flat
 | `pi/extensions/queue-editor/` | `~/.pi/agent/extensions/queue-editor/` |
 | `pi/extensions/compact-tools.ts` | `~/.pi/agent/extensions/compact-tools.ts` |
 | `pi/themes/dark-flat.json` | `~/.pi/agent/themes/dark-flat.json` |
+| `pi/extensions/background-processes.ts` | `~/.pi/agent/extensions/background-processes.ts` |
+| `pi/rpiv-todo.json` | `~/.config/rpiv-todo/config.json` |
+| `pi/subagents.json` | `~/.pi/agent/extensions/subagent/config.json` |
 
 Claude imports the shared file and appends Claude-specific rules.
 
@@ -142,10 +151,14 @@ Ghostty loads both.
   pi install npm:pi-web-access
   pi install npm:@datadog/pi-plugin@0.7.21
   pi install npm:@juicesharp/rpiv-ask-user-question@2.12.0
+  pi install npm:pi-background-tasks@2.6.9
+  pi install npm:@juicesharp/rpiv-todo@2.13.6
+  pi install npm:pi-subagents@0.77.0
   ```
 
-  The Datadog and questionnaire versions are pinned; change the package specs
-  deliberately when upgrading. Restart Pi after installation.
+  All packages except web access are pinned; change the package specs deliberately
+  when upgrading. Preserve the background package's `extensions: []` filter and
+  the subagent package's `prompts: []` filter. Restart Pi after installation.
   Built-in MCP remains enabled for Atlassian only, via `pi/mcp.json`, with its
   default `codemode` exposure. Run `pi mcp list` to check it and
   `pi mcp login atlassian` if sign-in is required. Do not install `pi-mcp-adapter`
@@ -175,6 +188,65 @@ Ghostty loads both.
   navigates questionnaire tabs rather than queueing a chat message. The tool is
   hidden in non-interactive runs. Optional overrides remain local at
   `~/.config/rpiv-ask-user-question/config.json`; none are needed for this setup.
+- **Background processes:** `background-processes.ts` loads only the process lane
+  of `pi-background-tasks@2.6.9`. Its package entry has `extensions: []` so the
+  upstream entrypoints do not activate independently. The wrapper sets the
+  package's activation flags, then restores the environment; no shell exports are
+  needed. Delegation, Fusion, attested agents, and Anthropic provider changes are
+  not enabled. It refuses an unreviewed package version.
+  Use `/bg --name "Typecheck" pnpm typecheck` to launch a job, `/jobs` to list jobs,
+  `/tasks` or Ctrl+Alt+B to open the manager, `/logs <id>` for output, and
+  `/kill <id>` to stop a job. Agent-launched `bg_run` jobs notify and request a
+  follow-up turn by default; user-launched `/bg` jobs notify without waking the
+  model. The current minimal footer omits extension status badges, so use these
+  commands and transcript notifications rather than relying on a footer badge.
+  Jobs stop on reload/exit by default. `/bg --survive-reload ...` or
+  `bg_run({isAgent:false,surviveReload:true,...})` opts an ordinary process into
+  same-process reload survival, not restart/crash recovery. Output and metadata
+  live in the job cwd's `.pi/tasks/`; keep them local and out of commits.
+  Upstream's peer range still lists Pi 0.81-0.84. Our integration tests validate
+  this pinned process-only subset on npm Pi 1.1.0: success/failure, notifications,
+  logs, stop, reload, and task-manager rendering. This is not an upstream claim of
+  general Pi 1.x compatibility. Re-run tests before upgrading either side.
+- **Subagents:** `pi-subagents@0.77.0` provides task-scoped delegation, not a roster
+  of permanent frontend/backend agents. Use `delegate` for a bounded task, `scout`
+  to locate relevant code, and `reviewer` for an independent read-only review.
+  Other native functional roles remain available; `delegate`/`worker` can write,
+  so give them explicit file scope and approval before implementation work.
+  The active parent's provider/model is inherited by default; built-in roles may
+  choose different thinking levels. External Codex/Claude/Cursor runner profiles
+  are disabled. No memory system is enabled.
+  `pi/subagents.json` uses eager tool activation so sessions started before the
+  package was installed still expose the launcher when resumed. This does not
+  authorize automatic delegation. Children default to fresh task contexts, so
+  supply a self-contained brief rather than relying on the full parent conversation.
+  Parallelism defaults to two within a run, with up to two active async runs,
+  four child admissions per run, sixteen per parent session, and no nested
+  delegation. These are separate limits, not a single two-child global cap.
+  Schedules, automatic missions, watchdogs, workflow scripts, agent-definition
+  management, and spawn-budget grants are off. Packaged workflow prompts are
+  filtered out. Simple single tasks and bounded task arrays/chains remain usable.
+  `/subagents` lists available agents; `/subagents-fleet` inspects work and
+  `/subagents-models` shows model mapping. Inline results use short static summary
+  rows, and FleetView is the only live subagent status surface; the duplicate
+  async widget is disabled. Use `/subagents-fleet` for details: Ctrl+O does not
+  expand summary-mode results. The queue-editor Markdown transformer displays the
+  exact pi-subagents 0.77.0 wake paragraph as “Subagent update received · reviewing
+  results”, preserving its full model/session content and automatic continuation.
+  Other text (including changed wake wording) remains unchanged by this rule.
+  The rich-renderer preview limit remains configured
+  for an intentional switch back to rich mode. The package does not replace our
+  main editor or footer. Subagent run IDs are separate from ordinary `bg_run` job IDs.
+  Change these preferences in the linked config files and restart Pi. Operator UI
+  settings can also update them; review repository diffs before committing.
+- **Live todos:** `@juicesharp/rpiv-todo` adds the `todo` tool and `/todos`, separate
+  from background jobs. Its panel shows logical work above the editor; the
+  `rpiv-todo.json` config caps it at six content rows. Option/Alt+T collapses or
+  expands it, leaving Ctrl+T for Pi's thinking display. Task snapshots persist on
+  the session branch across reload/compaction; no separate SQLite service is
+  needed. Completion remains the agent's report, not independent verification.
+  If `XDG_CONFIG_HOME` is set, link the same config under
+  `$XDG_CONFIG_HOME/rpiv-todo/config.json` instead.
 - **Pi tool presentation:** `dark-flat` copies Pi 1.1's dark theme, changing only
   the three tool background colors to the terminal default. User-message and
   selection backgrounds stay unchanged. `compact-tools.ts` adds a presentation-only
@@ -203,7 +275,7 @@ Ghostty loads both.
   When upgrading from the earlier single-file extension, remove its old
   `~/.pi/agent/extensions/queue-editor.ts` link after backing it up; the setup block
   above backs up both old and new locations. Do not load both versions.
-  Tests (requires npm-installed Pi and Node 22.19+):
+  Tests (requires npm-installed Pi, the declared packages, and Node 22.19+):
   `node --test pi/tests/*.test.mjs` from this repository's root.
 - **Pi compact pastes:** copied images display as `[Image #N]`, and copied files
   as `[File #N: filename]`, in both the editor and delivered user messages. These

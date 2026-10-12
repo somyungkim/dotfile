@@ -4,6 +4,9 @@ import { messageText, PRESENTATION_ENTRY, Presentations } from "./presentations.
 export { QueueEditor } from "./editor.ts";
 export { CompactEditor } from "./compact-editor.ts";
 
+// Exact match for pi-subagents 0.77.0. Unknown/changed wake text stays visible.
+const SUBAGENT_WAKE_TEXT = "Inspect subagent updates above. Answer pending supervisor requests within your authority. For completed work, read saved results and resume the already-authorized parent task, or report completion. If approval is required, explicitly ask the user. Do not silently yield, rerun completed work, or infer new authorization.";
+
 export default function (pi: ExtensionAPI) {
   let views = new Presentations();
   let saved = new Set<string>();
@@ -19,7 +22,11 @@ export default function (pi: ExtensionAPI) {
 
   // This hook changes only TUI Markdown. Model context, exports and the normal
   // session messages retain the full content and original paths.
-  pi.registerMarkdownTransformer((text, ctx) => ctx.messageType === "user" ? views.render(text) : text);
+  pi.registerMarkdownTransformer((text, ctx) => {
+    if (ctx.messageType !== "user") return text;
+    if (text === SUBAGENT_WAKE_TEXT) return "Subagent update received · reviewing results";
+    return views.render(text);
+  });
 
   pi.on("session_start", (_event, ctx) => {
     views = new Presentations();

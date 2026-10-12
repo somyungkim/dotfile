@@ -1,0 +1,34 @@
+{
+  "toolActivation": "eager",
+  "inlineToolDisplay": "summary",
+  "fleetView": true,
+  "asyncWidget": false,
+  "defaultSubagentContext": "fresh",
+  "globalConcurrencyLimit": 2,
+  "parallel": {
+    "maxTasks": 4,
+    "concurrency": 2
+  },
+  "maxActiveAsyncRunsPerSession": 2,
+  "maxSubagentSpawnsPerRun": 4,
+  "maxSubagentSpawnsPerSession": 16,
+  "maxSubagentDepth": 1,
+  "scheduledRuns": {
+    "enabled": false
+  },
+  "missions": {
+    "enabled": false
+  },
+  "disabledFeatures": [
+    "agent-management",
+    "watchdog",
+    "missions",
+    "workflow-scripts",
+    "external-machines",
+    "spawn-budget-grants"
+  ],
+  "mainWindowRenderer": {
+    "horizontalSpacing": 0,
+    "compactResultMaxLines": 3
+  }
+}

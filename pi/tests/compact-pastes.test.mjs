@@ -279,6 +279,22 @@ test("invalid persisted presentation spans are ignored", () => {
   assert.equal(views.render("plain"), "plain");
 });
 
+test("subagent wake display is compact without changing messages or similar text", () => {
+  const wake = "Inspect subagent updates above. Answer pending supervisor requests within your authority. For completed work, read saved results and resume the already-authorized parent task, or report completion. If approval is required, explicitly ask the user. Do not silently yield, rerun completed work, or infer new authorization.";
+  let transform;
+  extension({
+    on() {}, registerCommand() {},
+    registerMarkdownTransformer(fn) { transform = fn; },
+  });
+  const message = Object.freeze({ role: "user", content: wake });
+  assert.equal(transform(message.content, { messageType: "user" }), "Subagent update received · reviewing results");
+  assert.equal(message.content, wake);
+  assert.equal(transform(wake, { messageType: "assistant" }), wake);
+  for (const text of ["Ordinary user message", `Quoted: ${wake}`, `${wake}\nExtra instructions`, `${wake} `]) {
+    assert.equal(transform(text, { messageType: "user" }), text);
+  }
+});
+
 test("extension persists display metadata and inspection never sends or edits a prompt", async () => {
   const handlers = new Map(), commands = new Map(), entries = [];
   let transform, current, hostText = "";

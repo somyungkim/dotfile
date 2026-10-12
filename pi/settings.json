@@ -7,6 +7,31 @@
   "packages": [
     "npm:pi-web-access",
     "npm:@datadog/pi-plugin@0.7.21",
-    "npm:@juicesharp/rpiv-ask-user-question@2.12.0"
-  ]
+    "npm:@juicesharp/rpiv-ask-user-question@2.12.0",
+    {
+      "source": "npm:pi-background-tasks@2.6.9",
+      "extensions": []
+    },
+    "npm:@juicesharp/rpiv-todo@2.13.6",
+    {
+      "source": "npm:pi-subagents@0.77.0",
+      "prompts": []
+    }
+  ],
+  "subagents": {
+    "watchdog": {
+      "enabled": false,
+      "children": {
+        "enabled": false
+      }
+    },
+    "agentOverrides": {
+      "codex-exec": { "disabled": true },
+      "codex-exec-writer": { "disabled": true },
+      "claude-code": { "disabled": true },
+      "claude-code-writer": { "disabled": true },
+      "cursor-agent": { "disabled": true },
+      "cursor-agent-writer": { "disabled": true }
+    }
+  }
 }
