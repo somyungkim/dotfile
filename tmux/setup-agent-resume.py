@@ -13,7 +13,7 @@ import tempfile
 import tomllib
 
 
-TITLE_ITEMS = ["activity", "thread-title", "project-name", "thread-id"]
+TITLE_ITEMS = ["activity", "thread-name", "project-name", "thread-id"]
 
 
 def codex_config(text):

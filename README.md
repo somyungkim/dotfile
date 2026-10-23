@@ -346,11 +346,11 @@ Ghostty loads both.
   link pointing at another checkout is rejected instead of silently replaced.
 
   Codex keeps its shared daemon. Titles keep the activity indicator, readable
-  conversation title, and project, with Thread ID appended:
+  conversation name, and project, with Thread ID appended:
   `Investigate alerts | workspace | 01a168ea-7506-7a12-b8b2-a1b0b...`.
   Conversation names in the resume picker and history are not changed.
   New Codex processes load this setting. In an already-running Codex pane, use
-  `/title` to enable and place **Thread ID last**, retaining **Thread Title** and
+  `/title` to enable and place **Thread ID last**, retaining **Thread Name** and
   **Project**. Already-running Claude processes must be restarted/resumed once
   to load the hook. Neither client is automatically interrupted by setup.
 
