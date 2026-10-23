@@ -12,7 +12,7 @@ Install packages for the included configs, then clone the repository.
 **macOS:** install [Homebrew](https://brew.sh/) and Git first.
 
 ```sh
-brew install tmux starship pyenv nvm zsh-autosuggestions zsh-syntax-highlighting
+brew install tmux python starship pyenv nvm zsh-autosuggestions zsh-syntax-highlighting
 brew install --cask ghostty wezterm font-jetbrains-mono
 mkdir -p "$HOME/.nvm"
 ```
@@ -23,7 +23,7 @@ Run the nvm script with `PROFILE=/dev/null` so it does not append to the symlink
 `.zshrc`. Log out and back in after changing the shell.
 
 ```sh
-sudo dnf install zsh git tmux jetbrains-mono-fonts google-noto-color-emoji-fonts \
+sudo dnf install zsh git tmux python3 jetbrains-mono-fonts google-noto-color-emoji-fonts \
   zsh-autosuggestions zsh-syntax-highlighting poppler-utils util-linux-user
 chsh -s "$(command -v zsh)"
 curl -sS https://starship.rs/install.sh | sh -s -- -b "$HOME/.local/bin"
@@ -114,6 +114,7 @@ ln -s "$dotfile_repo/pi/subagents.json" "$HOME/.pi/agent/extensions/subagent/con
 | Source | Destination |
 | --- | --- |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
+| `tmux/agent-resume.py` | `~/.config/tmux/agent-resume.py` (setup below) |
 | `wezterm/wezterm.lua` | `~/.wezterm.lua` |
 | `ghostty/` | `~/.config/ghostty/` |
 | `nvim/` | `~/.config/nvim/` |
@@ -330,6 +331,43 @@ Ghostty loads both.
   `git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"`.
   Start tmux, then press **Ctrl+b**, followed by **Shift+i**, to install plugins.
   The config enables automatic session saving and restoration at server startup.
+- **Codex and Claude reboot restore:** after linking the configs, run this from
+  the repository root with Python 3.11+:
+
+  ```sh
+  python3 tmux/setup-agent-resume.py
+  tmux source-file ~/.tmux.conf
+  ```
+
+  Setup links the helper to this checkout, backs up changed client configs under
+  `~/.dotfile-backups/`, and merges only the Codex terminal-title setting and a
+  Claude `SessionStart` hook. Existing settings and hooks are retained. Rerun
+  setup after moving the checkout or changing the Python installation. A helper
+  link pointing at another checkout is rejected instead of silently replaced.
+
+  Codex keeps its shared daemon. Titles keep the activity indicator, readable
+  conversation title, and project, with Thread ID appended:
+  `Investigate alerts | workspace | 01a168ea-7506-7a12-b8b2-a1b0b...`.
+  Conversation names in the resume picker and history are not changed.
+  New Codex processes load this setting. In an already-running Codex pane, use
+  `/title` to enable and place **Thread ID last**, retaining **Thread Title** and
+  **Project**. Already-running Claude processes must be restarted/resumed once
+  to load the hook. Neither client is automatically interrupted by setup.
+
+  Each resurrect save stores `codex --yolo resume <ID>` or
+  `claude --dangerously-skip-permissions --resume <ID>` directly in the pane's
+  snapshot entry. Codex IDs come from the pane's own title; truncated IDs must
+  match exactly one saved session. Claude IDs come from its hook and are checked
+  against the running process in that pane. Unknown IDs restore as shells and
+  emit a diagnostic; no directory/recency guess or stale launch ID is used.
+  Shells, other programs, pane titles, layouts, and working directories retain
+  normal resurrect behavior. The save process uses its `CODEX_HOME`, or
+  `~/.codex`; different Codex homes per pane are not supported.
+
+  Verify with `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tmux/tests -v`.
+  The integration test uses an isolated tmux server, fake agents, and the
+  installed `~/.tmux/plugins/tmux-resurrect`; set `DOTFILE_RESURRECT` for a
+  different plugin path. No model calls or live-session restarts are performed.
 - **Reload:** tmux **Ctrl+b**, then **r**; Ghostty **Reload Configuration**;
   WezTerm reloads automatically. Open a new shell or agent session for their changes.
 - **Restore:** remove the destination symlink with `unlink`, then move its original
