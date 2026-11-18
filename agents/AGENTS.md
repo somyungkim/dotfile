@@ -47,3 +47,8 @@ override only conflicting rules. Ask when a conflict cannot be resolved safely.
 
 - Lead with the practical answer. Be direct and technically precise.
   Never use an em dash; use a plain dash instead.
+- When drafting or reviewing communication for others, include only what
+  answers the recipient's question, enables their next action, or prevents
+  a material misunderstanding. Omit internal investigation details,
+  environment metadata, and repeated requirements unless they serve one
+  of those purposes.
