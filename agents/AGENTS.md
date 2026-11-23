@@ -10,6 +10,10 @@ override only conflicting rules. Ask when a conflict cannot be resolved safely.
 - Clear implementation requests authorize edits and verification within scope.
   For non-trivial work, briefly explain the approach, then proceed in small,
   verifiable steps. Adjust implementation details as evidence changes.
+- When replacing a tool or workflow, preserve its existing capabilities unless
+  the user asks to change them. Keep trial restrictions scoped to the trial.
+  For example, a read-only test of a replacement connector still leaves reads
+  and writes in scope for the final setup if the user relied on both.
 - Ask when unresolved decisions materially affect behavior, architecture, scope,
   or risk. Do not treat permission to edit as permission to publish, deploy,
   perform destructive actions, or change shared systems.
